@@ -15,8 +15,8 @@ public class Main {
     public static void main(String [] args){
         Scanner escanerEntrada = new Scanner(System.in);
         boolean condicionMenu = false;
+        Util.pintarMenu();
         do{
-            Util.pintarMenu();
             String opcion = escanerEntrada.nextLine();
             switch(opcion){
                 case "1":
@@ -39,6 +39,7 @@ public class Main {
                     break;
                 default:
                     System.out.println("*** opcion Incorrecta, vuelva a intentarlo ***");
+                    System.out.println("*** opciones validas del 1 al 6 ***");
                     break;
             }
         }while(!condicionMenu);
