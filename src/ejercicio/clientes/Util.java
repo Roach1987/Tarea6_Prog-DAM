@@ -1,5 +1,6 @@
 package ejercicio.clientes;
 
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,7 +12,10 @@ import java.util.regex.Pattern;
  */
 public class Util {
     public static final String LETRAS_DNI = "TRWAGMYFPDXBNJZSQVHLCKE";
-
+// *************************************************************************************************************
+// *************************************** Métodos de validación ***********************************************
+// *************************************************************************************************************
+    
     /**
      * Método que comprueba que el teléfono es válido comienza por 6, 7 (Movil)
      * ó por 8, 9 (Fijo) y tiene 9 dígitos en total.
@@ -19,10 +23,9 @@ public class Util {
      * @param telefono
      * @return boolean
      */
-    public static boolean compruebaTelefono(int telefono) {
-        String comprobarTelefono = String.valueOf(telefono);
+    public static boolean compruebaTelefono(String telefono) {
         Pattern pattern = Pattern.compile("^[6789][0-9]{8}$");
-        return pattern.matcher(comprobarTelefono).matches();
+        return pattern.matcher(telefono).matches();
     }
 
     /**
@@ -62,4 +65,84 @@ public class Util {
         System.out.println("6 - Salir de la aplicación");
         System.out.println("*** Introduzca la opción deseada (1-6) ***");
     }
+// *************************************************************************************************************
+// *************************************************************************************************************
+    
+// *************************************************************************************************************  
+// ************************************ Métodos del menu de usuario ********************************************
+// *************************************************************************************************************    
+   public static String introduceCliente(Scanner escanerEntrada){
+        boolean condicionDni = false;
+        boolean condicionTelefono = false;
+        String nombreCliente, nif, direccion;
+        int telefono;
+        double deuda; 
+        
+       // Introducir nombre cliente.
+       System.out.println("*** Introduce el nombre del cliente ***");
+       nombreCliente = escanerEntrada.nextLine();
+       
+       // Introducir NIF
+       System.out.println("*** Introduce el DNI ***");
+       do{
+           String dniValidar = escanerEntrada.nextLine();
+           if(validarNIF(dniValidar)){
+               nif = dniValidar;
+               condicionDni = true;
+           }else{
+               System.out.println("*** El DNI introducido no es valido, vuelve a intentarlo. ***");
+           }
+       }while(!condicionDni);
+       
+       // Introducir Telefono
+       do{
+           String telefonoValidar = escanerEntrada.nextLine();
+           if(compruebaTelefono(telefonoValidar)){
+               telefono = Integer.parseInt(telefonoValidar);
+               condicionTelefono = true;
+           }else{
+               System.out.println("*** El telefono introducido no es valido, vuelve a intentarlo. ***");
+           }
+       }while(!condicionTelefono);
+       
+       // Introduce direccion
+       System.out.println("*** Introduce la dirección del cliente ***");
+       direccion = escanerEntrada.nextLine();
+       
+       // Introduce deuda.
+       
+       // continuar codigo *********************************************
+       
+       /// Crear metodo que valide la deuda.....
+       /// booleano que compruebe que la deuda no sea un String ni un numero negativo
+       //*****
+       //*****
+       
+       
+       
+       
+       /// Crear objeto tipo Cliente y guardarlo en el fichero **************************
+       //*******
+       //*******
+       //*******
+       //*******
+       
+       
+       
+       
+       return "Cliente creado correctamente";
+   }
+    
+    
+// *************************************************************************************************************
+// *************************************************************************************************************
+    
+    
+// *************************************************************************************************************  
+// ****************************************** Métodos de Fichero ***********************************************
+// *************************************************************************************************************
+    
+    
+// *************************************************************************************************************
+// *************************************************************************************************************
 }

@@ -14,13 +14,15 @@ import java.util.Scanner;
 public class Main {
     public static void main(String [] args){
         Scanner escanerEntrada = new Scanner(System.in);
+        String mensaje;
         boolean condicionMenu = false;
         Util.pintarMenu();
         do{
             String opcion = escanerEntrada.nextLine();
             switch(opcion){
                 case "1":
-                    
+                    mensaje = Util.introduceCliente(escanerEntrada);
+                    System.out.println(mensaje);
                     break;
                 case "2":
                     
