@@ -2,15 +2,13 @@ package ejercicio.clientes;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,10 +18,12 @@ import java.util.regex.Pattern;
  *
  * @author Roach
  */
-public class Util {
-
+public class Util implements Serializable{
+    
+    public static final long serialVersionUID = 1L;
     public static final String LETRAS_DNI = "TRWAGMYFPDXBNJZSQVHLCKE";
     public static final String MENSAJE_OK = "OK";
+    public static final String RUTA_FICHERO = "C:\\Users\\Roach_Mimi\\clientes.dat";
 // *************************************************************************************************************
 // *************************************** Métodos de validación ***********************************************
 // *************************************************************************************************************
@@ -135,6 +135,7 @@ public class Util {
         } while (!condicionDni);
 
         // Introducir Telefono
+        System.out.println("*** Introduce el telefono ***");
         do {
             String telefonoValidar = escanerEntrada.nextLine();
             if (compruebaTelefono(telefonoValidar)) {
@@ -158,7 +159,7 @@ public class Util {
                 deuda = Integer.parseInt(deudaEntrada);
                 condicionDeuda = true;
             } else {
-                System.out.println("***  ***");
+                System.out.println("*** Error al introducir la deuda, mensaje: " + deudaValidada + " ***");
             }
         } while (!condicionDeuda);
 
@@ -188,7 +189,7 @@ public class Util {
         if (null != fichero && fichero.exists()) {
             ficheroAnadir(fichero, cliente);
         } else {
-            ficheroCrear();
+            fichero = ficheroCrear();
             ficheroAnadir(fichero, cliente);
         }
     }
@@ -199,39 +200,57 @@ public class Util {
      * @param cliente 
      */
     public static void ficheroAnadir(File fichero, Cliente cliente) {
+        
+        // Declaramos los Streams que vamos a utilizar en el proceso, tambien la lista que va
+        // a albergar los objetos tipo Cliente.
+        FileInputStream ficheroEntrada = null;
         FileOutputStream ficheroSalida = null;
+        ObjectInputStream objetoEntrada = null;
         ObjectOutputStream objetoSalida = null;
+        ArrayList<Cliente> listaObjetosCliente = null;
+        
         try {          
-            ArrayList<Cliente> listaObjetosCliente = new ArrayList<Cliente>();
-                if (!fichero.exists()) {
-                    fichero = ficheroCrear();
-                }
-                FileInputStream ficheroFlujoEntrada = new FileInputStream(fichero); // lee la informacion del archivo
-                ObjectInputStream objetoFlujoEntrada = new ObjectInputStream(ficheroFlujoEntrada); // traduce la infromacion del archivo en datos
-                
-                listaObjetosCliente = (ArrayList<Cliente>) objetoFlujoEntrada.readObject(); // lee todos los objetos que esten en el array
-                ficheroFlujoEntrada.close();
-                objetoFlujoEntrada.close();
-                // traduce la infromacion del archivo en datos
-
-            listaObjetosCliente.add(cliente); // introduce en el array los datos del nuevo cliente contenidos en el objeto "datosCliente"
+            listaObjetosCliente = new ArrayList<>();
             
-            ficheroSalida = new FileOutputStream(fichero); // Se crea el flujo para poder escribir en "clientes.dat"
+            if (!fichero.exists()){
+                fichero = ficheroCrear();
+            }
+            // Leemos la información del fichero.
+            ficheroEntrada = new FileInputStream(fichero);
+            
+            // Traducimos la información del archivo en datos.
+            objetoEntrada = new ObjectInputStream(ficheroEntrada); 
 
-                objetoSalida = new ObjectOutputStream(ficheroSalida); // prepara la forma de escritura para "clientes.dat" que en este caso sera escribir un objeto
-                objetoSalida.writeObject(listaObjetosCliente);
-                
-            // Escribe en el archivo el Array de objetos "objetoArrayCliente"
-            // prepara la forma de escritura para "clientes.dat" que en este caso sera escribir un objeto
-                System.out.println("Cliente introducido con éxito");
-        } catch (FileNotFoundException | IOException | ClassNotFoundException ex) {
+            // Leemos todos los objetos que estan en el array
+            listaObjetosCliente = (ArrayList<Cliente>) objetoEntrada.readObject(); 
+
+            // Introducimos en la lista los datos del nuevo cliente
+            listaObjetosCliente.add(cliente);
+            
+            // Se crea el flujo para poder escribir en "clientes.dat"
+            ficheroSalida = new FileOutputStream(fichero); 
+
+            // Prepara la forma de escritura para "clientes.dat" que en este caso sera escribir un objeto
+            objetoSalida = new ObjectOutputStream(ficheroSalida); 
+            
+            // Escribimos la lista en el fichero
+            objetoSalida.writeObject(listaObjetosCliente);
+
+            System.out.println("El cliente con NIF " + cliente.getNif() + " ha sido añadido correctamente al fichero");
+        } catch (IOException | ClassNotFoundException ex) {
             System.out.println("Error en el fichero: " + ex.getMessage());
         } finally {
             try {
+                // Cerramos los Streams tanto de entrada como de salida.
+                if(null != ficheroEntrada){
+                    ficheroEntrada.close();            
+                }
+                if(null != objetoEntrada){
+                    objetoEntrada.close();
+                }
                 if(null != ficheroSalida){
                     ficheroSalida.close();
                 }
-                
                 if(null != objetoSalida){
                     objetoSalida.close();
                 }
@@ -248,7 +267,14 @@ public class Util {
      * @return File
      */
     public static File ficheroCrear() {
-        return new File("clientes.dat");
+        File fichero = null;
+        try {
+            fichero = new File(RUTA_FICHERO);
+            fichero.createNewFile();
+        } catch (IOException ex) {
+            System.out.println("Error al crear el fichero.");
+        }
+        return fichero;
     }
 
     /**
@@ -296,7 +322,7 @@ public class Util {
      * @param fichero
      * @return
      */
-    public static ArrayList<Cliente> cargarListaClientes(File fichero) {
+    private static ArrayList<Cliente> cargarListaClientes(File fichero) {
         ArrayList<Cliente> listaCliente = null;
         try {
             FileInputStream ficheroFlujoEntrada = new FileInputStream(fichero);// lee la informacion del archivo
