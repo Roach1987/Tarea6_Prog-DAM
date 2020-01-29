@@ -18,12 +18,13 @@ import java.util.regex.Pattern;
  *
  * @author Roach
  */
-public class Util implements Serializable{
-    
+public class Util implements Serializable {
+
     public static final long serialVersionUID = 1L;
     public static final String LETRAS_DNI = "TRWAGMYFPDXBNJZSQVHLCKE";
     public static final String MENSAJE_OK = "OK";
-    public static final String RUTA_FICHERO = "C:\\Users\\Roach_Mimi\\clientes.dat";
+    public static final String RUTA_FICHERO = "clientes.dat";
+    private static ArrayList<Cliente> listaObjetosCliente = new ArrayList<Cliente>();
 // *************************************************************************************************************
 // *************************************** Métodos de validación ***********************************************
 // *************************************************************************************************************
@@ -108,7 +109,7 @@ public class Util implements Serializable{
 // *************************************************************************************************************  
 // ************************************ Métodos del menu de usuario ********************************************
 // *************************************************************************************************************    
-    public static String introduceCliente(Scanner escanerEntrada, File fichero) {
+    public static void introduceCliente(Scanner escanerEntrada) {
         boolean condicionDni = false;
         boolean condicionTelefono = false;
         boolean condicionDeuda = false;
@@ -166,11 +167,8 @@ public class Util implements Serializable{
         // Instanciamos el cliente, con los datos recogidos.
         Cliente clienteCreado = new Cliente(nif, nombreCliente, telefono, direccion, deuda);
 
-        // Comprobamos si el fichero esta abierto si no se abre, si no existe se crea.
-        // Añadimos la instancia del Cliente al fichero.
-        ficheroAnadirCliente(fichero, clienteCreado);
-
-        return "Cliente creado correctamente";
+        // Invocamos el metodo que realizara la inserción del nuevo cliente.
+        ficheroAnadirCliente(clienteCreado);
     }
 
 // *************************************************************************************************************
@@ -179,102 +177,67 @@ public class Util implements Serializable{
 // ****************************************** Métodos de Fichero ***********************************************
 // *************************************************************************************************************
     /**
-     * Método que comprueba que el fichero existe si no lo crea, y a
-     * continuación añade el cliente al fichero
+     * Método que añade un nuevo cliente al fichero.
      *
-     * @param fichero
      * @param cliente
      */
-    public static void ficheroAnadirCliente(File fichero, Cliente cliente) {
-        if (null != fichero && fichero.exists()) {
-            ficheroAnadir(fichero, cliente);
-        } else {
-            fichero = ficheroCrear();
-            ficheroAnadir(fichero, cliente);
-        }
-    }
-
-    /**
-     * Método que añade un nuevo cliente al fichero.
-     * @param fichero
-     * @param cliente 
-     */
-    public static void ficheroAnadir(File fichero, Cliente cliente) {
-        
-        // Declaramos los Streams que vamos a utilizar en el proceso, tambien la lista que va
-        // a albergar los objetos tipo Cliente.
-        FileInputStream ficheroEntrada = null;
-        FileOutputStream ficheroSalida = null;
-        ObjectInputStream objetoEntrada = null;
-        ObjectOutputStream objetoSalida = null;
-        ArrayList<Cliente> listaObjetosCliente = null;
-        
-        try {          
-            listaObjetosCliente = new ArrayList<>();
-            
-            if (!fichero.exists()){
-                fichero = ficheroCrear();
-            }
-            // Leemos la información del fichero.
-            ficheroEntrada = new FileInputStream(fichero);
-            
-            // Traducimos la información del archivo en datos.
-            objetoEntrada = new ObjectInputStream(ficheroEntrada); 
-
-            // Leemos todos los objetos que estan en el array
-            listaObjetosCliente = (ArrayList<Cliente>) objetoEntrada.readObject(); 
-
-            // Introducimos en la lista los datos del nuevo cliente
-            listaObjetosCliente.add(cliente);
-            
-            // Se crea el flujo para poder escribir en "clientes.dat"
-            ficheroSalida = new FileOutputStream(fichero); 
-
-            // Prepara la forma de escritura para "clientes.dat" que en este caso sera escribir un objeto
-            objetoSalida = new ObjectOutputStream(ficheroSalida); 
-            
-            // Escribimos la lista en el fichero
-            objetoSalida.writeObject(listaObjetosCliente);
-
-            System.out.println("El cliente con NIF " + cliente.getNif() + " ha sido añadido correctamente al fichero");
-        } catch (IOException | ClassNotFoundException ex) {
-            System.out.println("Error en el fichero: " + ex.getMessage());
-        } finally {
-            try {
-                // Cerramos los Streams tanto de entrada como de salida.
-                if(null != ficheroEntrada){
-                    ficheroEntrada.close();            
-                }
-                if(null != objetoEntrada){
-                    objetoEntrada.close();
-                }
-                if(null != ficheroSalida){
-                    ficheroSalida.close();
-                }
-                if(null != objetoSalida){
-                    objetoSalida.close();
-                }
-            } catch (IOException ex) {
-                System.out.println("Error en el fichero: " + ex.getMessage());
-            }
-        }
-    }
-
-
-    /**
-     * Método que crea el fichero "clientes.dat"
-     *
-     * @return File
-     */
-    public static File ficheroCrear() {
-        File fichero = null;
+    public static void ficheroAnadirCliente(Cliente cliente) {
         try {
-            fichero = new File(RUTA_FICHERO);
-            fichero.createNewFile();
+            // Intentamos crear el fichero y su objeto dentro de un try pasando por parametro 
+            // estos dos Streams sin catch, si falla por estar vacio no lanzara ninguna excepcion y añadira
+            // el cliente con el objeto ObjectOutputStream
+            try (
+                    // lee la informacion del archivo.
+                FileInputStream ficheroEntrada = new FileInputStream(RUTA_FICHERO);
+                    
+                // traduce la infromacion del archivo en datos
+                ObjectInputStream objetoEntrada = new ObjectInputStream(ficheroEntrada) 
+            ) {
+                // lee todos los objetos que esten en el array
+                listaObjetosCliente = (ArrayList<Cliente>) objetoEntrada.readObject();
+                
+                // Cerramos los Streams de entrada.
+                ficheroEntrada.close();
+                objetoEntrada.close();
+            }
+        } catch (IOException | ClassNotFoundException ex) {
+            System.out.println("El fichero esta vacío");
+        }
+
+        // Introduce en el array los datos del nuevo cliente
+        listaObjetosCliente.add(cliente);
+
+        ObjectOutputStream objetoSalida;
+        // Se crea el flujo para poder escribir en "clientes.dat"
+        try (FileOutputStream ficheroSalida = new FileOutputStream(RUTA_FICHERO)) {
+            
+            // prepara la forma de escritura para "clientes.dat" que en este caso sera escribir un objeto
+            objetoSalida = new ObjectOutputStream(ficheroSalida);
+            
+            // Escribe en el archivo el Array de objetos "objetoArrayCliente"
+            objetoSalida.writeObject(listaObjetosCliente);
+            
+            // Cerramos los Streams de salida.
+            ficheroSalida.close();
+            objetoSalida.close();
+        } catch (IOException ex) {
+            System.out.println("Error en fichero " + ex.getMessage());
+        }
+        System.out.println("El cliente con NIF " + cliente.getNif() + " ha sido añadido correctamente al fichero");
+    }
+
+    /**
+     * Método queComprueba si existe el fichero, si no lo crea.
+     */
+    public static void ficheroCrear() {
+        File fichero = new File(RUTA_FICHERO);
+        try {
+            if (!fichero.exists()) {
+                fichero.createNewFile();
+            }
         } catch (IOException ex) {
             System.out.println("Error al crear el fichero.");
         }
-        return fichero;
     }
 
     /**
@@ -289,15 +252,13 @@ public class Util implements Serializable{
     }
 
     /**
-     * Método que imprime por pantalla el contenido del fichero, si este esta vacio imprime
-     * un mensaje indicativo.
-     * @param fichero 
+     * Método que imprime por pantalla el contenido del fichero, si este esta
+     * vacio imprime un mensaje indicativo.
+     *
+     * @param fichero
      */
     public static void mostrarClientes(File fichero) {
         try {
-            if (!fichero.exists()) {
-                fichero = ficheroCrear();
-            }
             // con "isEmpty()"sabremos si el archivo tiene infromacion escrita o no
             if (!cargarListaClientes(fichero).isEmpty()) {
                 ArrayList<Cliente> listaClientes = cargarListaClientes(fichero);

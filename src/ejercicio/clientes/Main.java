@@ -1,6 +1,5 @@
 package ejercicio.clientes;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Scanner;
 
@@ -13,16 +12,16 @@ public class Main implements Serializable{
     
     public static void main(String [] args){
         Scanner escanerEntrada = new Scanner(System.in);
-        File fichero = Util.ficheroCrear();
-        String mensaje;
+        // Creamos el fichero con el que vamos a trabajar.
+        Util.ficheroCrear();
         boolean condicionMenu = false;
-        Util.pintarMenu();
+        
         do{
+            Util.pintarMenu();
             String opcion = escanerEntrada.nextLine();
             switch(opcion){
                 case "1":
-                    mensaje = Util.introduceCliente(escanerEntrada, fichero);
-                    System.out.println(mensaje);
+                    Util.introduceCliente(escanerEntrada);
                     break;
                 case "2":
                     
