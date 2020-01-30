@@ -23,7 +23,9 @@ public class Util implements Serializable {
     public static final long serialVersionUID = 1L;
     public static final String LETRAS_DNI = "TRWAGMYFPDXBNJZSQVHLCKE";
     public static final String MENSAJE_OK = "OK";
-    public static final String RUTA_FICHERO = "clientes.dat";
+    public static final String ARCHIVO_CLIENTES = "clientes.dat";
+    public static final String BUSCAR_CLIENTE = "buscar";
+    public static final String BORRAR_CLIENTE = "buscar";
     private static ArrayList<Cliente> listaObjetosCliente = new ArrayList<Cliente>();
 // *************************************************************************************************************
 // *************************************** Métodos de validación ***********************************************
@@ -103,6 +105,18 @@ public class Util implements Serializable {
         System.out.println("6 - Salir de la aplicación");
         System.out.println("*** Introduzca la opción deseada (1-6) ***");
     }
+    
+   /**
+     * Método utilitario para crear separación en el menu.
+     */
+    public static void limpiarPantalla() {
+        int x = 0;
+        while (x < 3) {
+            System.out.println();
+            x++;
+        }
+    }
+
 // *************************************************************************************************************
 // *************************************************************************************************************
 
@@ -170,12 +184,108 @@ public class Util implements Serializable {
         // Invocamos el metodo que realizara la inserción del nuevo cliente.
         ficheroAnadirCliente(clienteCreado);
     }
+    
+    /**
+     * Método utilitario que pide dni de cliente a buscar.
+     * Se realiza para liberar de logica el Main.
+     * @param escanerEntrada 
+     */
+    public static void clienteBuscarBorrar(Scanner escanerEntrada, String condicion){
+        ArrayList<Cliente> listaClientes = cargarListaClientes();
+        // Validamos si el fichero no esta vacio, de estarlo le devolveremos 
+        // un mensaje indicativo al usuario.
+        if(null != listaClientes && !listaClientes.isEmpty()){
+            boolean condicionDni = false;
+            String dniValido = "";
+            do{
+                System.out.println("*** Introduce DNI del cliente a buscar. ***");
+                String dniEntrada = escanerEntrada.nextLine();
+                if(Util.validarNIF(dniEntrada)){
+                    dniValido = dniEntrada;
+                    condicionDni = true;
+                }else{
+                    System.out.println("*** El DNI introducido no es valido. ***");
+                    limpiarPantalla();
+                }
+            }while(!condicionDni);
+            
+            if(condicion.equals(BUSCAR_CLIENTE) ){
+                BuscarCliente(dniValido, listaClientes);
+            }else{
+                borrarCliente(dniValido, listaClientes);
+            }
+        }else{
+            System.out.println("*** El fichero esta vacio, no se puede realizar la busqueda. ***");
+        }
+    }
+    
+    /**
+     * Método que busca un cliente con un dni llegado por parametro en el fichero.
+     * @param dni 
+     * @param clientes 
+     */
+    public static void BuscarCliente(String dni, ArrayList<Cliente> clientes){
+        ArrayList<Cliente> clientesEncontrados = new ArrayList<>();
+        
+        // Buscamos el/los clientes que coinciden con el dni.
+        for(Cliente cliente : clientes){
+            if(cliente.getNif().equalsIgnoreCase(dni)){
+                clientesEncontrados.add(cliente);
+            }
+        }
+        
+        // Recorremos los clientes encontrados para pintarlos.
+        if(!clientesEncontrados.isEmpty()){
+            String mensaje = (clientesEncontrados.size() > 1) ? "*** Datos relacionados con DNI " + dni + " ***"
+                    : "*** Datos del cliente con DNI " + dni + " ***";
+            System.out.println(mensaje);
+            int contador = 1;
+            for(Cliente cliente : clientesEncontrados){
+                System.out.println("**************** Dato nº" + contador + " ********************");
+                System.out.println(cliente.toString());
+                System.out.println("****************************************************************");
+                contador++;
+            }
+        }else{
+            System.out.println("*** No se ha encontrado ningun cliente con DNI " + dni);
+        }
+    }
+    
+    /**
+     * Método que borra un cliente con un dni llegado por parametro en el fichero.
+     * @param dni
+     * @param clientes 
+     */
+    public static void borrarCliente(String dni, ArrayList<Cliente> clientes){
+        Cliente clienteEncontrado = null;
+        for(Cliente cliente : clientes){
+            if(cliente.getNif().equals(dni))
+            clienteEncontrado = cliente;
+        }
+        
+        /** continuar con codigo para borrar el cliente del fichero **/
+    
+    }
 
 // *************************************************************************************************************
 // *************************************************************************************************************
 // *************************************************************************************************************  
 // ****************************************** Métodos de Fichero ***********************************************
 // *************************************************************************************************************
+   /**
+     * Método queComprueba si existe el fichero, si no lo crea.
+     */
+    public static void ficheroCrear() {
+        File fichero = new File(ARCHIVO_CLIENTES);
+        try {
+            if (!fichero.exists()) {
+                fichero.createNewFile();
+            }
+        } catch (IOException ex) {
+            System.out.println("Error al crear el fichero.");
+        }
+    }
+    
     /**
      * Método que añade un nuevo cliente al fichero.
      *
@@ -186,9 +296,10 @@ public class Util implements Serializable {
             // Intentamos crear el fichero y su objeto dentro de un try pasando por parametro 
             // estos dos Streams sin catch, si falla por estar vacio no lanzara ninguna excepcion y añadira
             // el cliente con el objeto ObjectOutputStream
+            // "try con autocierre de Streams"
             try (
-                    // lee la informacion del archivo.
-                FileInputStream ficheroEntrada = new FileInputStream(RUTA_FICHERO);
+                // lee la informacion del archivo.
+                FileInputStream ficheroEntrada = new FileInputStream(ARCHIVO_CLIENTES);
                     
                 // traduce la infromacion del archivo en datos
                 ObjectInputStream objetoEntrada = new ObjectInputStream(ficheroEntrada) 
@@ -196,7 +307,7 @@ public class Util implements Serializable {
                 // lee todos los objetos que esten en el array
                 listaObjetosCliente = (ArrayList<Cliente>) objetoEntrada.readObject();
                 
-                // Cerramos los Streams de entrada.
+                // Cerramos los Streams de entrada
                 ficheroEntrada.close();
                 objetoEntrada.close();
             }
@@ -209,7 +320,7 @@ public class Util implements Serializable {
 
         ObjectOutputStream objetoSalida;
         // Se crea el flujo para poder escribir en "clientes.dat"
-        try (FileOutputStream ficheroSalida = new FileOutputStream(RUTA_FICHERO)) {
+        try (FileOutputStream ficheroSalida = new FileOutputStream(ARCHIVO_CLIENTES)) {
             
             // prepara la forma de escritura para "clientes.dat" que en este caso sera escribir un objeto
             objetoSalida = new ObjectOutputStream(ficheroSalida);
@@ -227,20 +338,6 @@ public class Util implements Serializable {
     }
 
     /**
-     * Método queComprueba si existe el fichero, si no lo crea.
-     */
-    public static void ficheroCrear() {
-        File fichero = new File(RUTA_FICHERO);
-        try {
-            if (!fichero.exists()) {
-                fichero.createNewFile();
-            }
-        } catch (IOException ex) {
-            System.out.println("Error al crear el fichero.");
-        }
-    }
-
-    /**
      * Método que borra un fichero si este existe.
      *
      * @param fichero
@@ -255,18 +352,19 @@ public class Util implements Serializable {
      * Método que imprime por pantalla el contenido del fichero, si este esta
      * vacio imprime un mensaje indicativo.
      *
-     * @param fichero
      */
-    public static void mostrarClientes(File fichero) {
+    public static void mostrarClientes() {
         try {
-            // con "isEmpty()"sabremos si el archivo tiene infromacion escrita o no
-            if (!cargarListaClientes(fichero).isEmpty()) {
-                ArrayList<Cliente> listaClientes = cargarListaClientes(fichero);
+            // Si el fichero no esta vacio pintamos los clientes que tiene.
+            if (!cargarListaClientes().isEmpty()) {
+                ArrayList<Cliente> listaClientes = cargarListaClientes();
                 System.out.println("*** La lista de clientes es la siguiente: ***");
+                int contador = 1;
                 for (Cliente cliente : listaClientes) {
+                    System.out.println("**************** Cliente nº" + contador + " ********************");
+                    System.out.println(cliente.toString());
                     System.out.println("***************************************************");
-                    cliente.toString();
-                    System.out.println("***************************************************");
+                    contador++;
                 }
             } else {
                 System.out.println("El fichero no tiene ningun registro en este momento");
@@ -283,17 +381,20 @@ public class Util implements Serializable {
      * @param fichero
      * @return
      */
-    private static ArrayList<Cliente> cargarListaClientes(File fichero) {
-        ArrayList<Cliente> listaCliente = null;
+    private static ArrayList<Cliente> cargarListaClientes() {
         try {
-            FileInputStream ficheroFlujoEntrada = new FileInputStream(fichero);// lee la informacion del archivo
-            ObjectInputStream objetoFlujoEntrada = new ObjectInputStream(ficheroFlujoEntrada); // traduce la informacion del archivo en datos       
-            listaCliente = (ArrayList<Cliente>) objetoFlujoEntrada.readObject(); // lee todos los objetos que esten en el array
-            // traduce la infromacion del archivo en datos
+            // lee la informacion del archivo
+            FileInputStream ficheroEntrada = new FileInputStream(ARCHIVO_CLIENTES);
+            
+            // traduce la informacion del archivo en datos
+            ObjectInputStream objetoEntrada = new ObjectInputStream(ficheroEntrada);    
+            
+            // lee todos los objetos que esten en el array
+            listaObjetosCliente = (ArrayList<Cliente>) objetoEntrada.readObject();
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("El fichero esta vacío");
         }
-        return listaCliente;
+        return listaObjetosCliente;
     }
 // *************************************************************************************************************
 // *************************************************************************************************************
