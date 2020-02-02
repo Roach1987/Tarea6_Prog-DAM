@@ -25,7 +25,7 @@ public class Util implements Serializable {
     public static final String MENSAJE_OK = "OK";
     public static final String ARCHIVO_CLIENTES = "clientes.dat";
     public static final String BUSCAR_CLIENTE = "buscar";
-    public static final String BORRAR_CLIENTE = "buscar";
+    public static final String BORRAR_CLIENTE = "borrar";
     private static ArrayList<Cliente> listaObjetosCliente = new ArrayList<Cliente>();
 // *************************************************************************************************************
 // *************************************** Métodos de validación ***********************************************
@@ -175,6 +175,7 @@ public class Util implements Serializable {
                 condicionDeuda = true;
             } else {
                 System.out.println("*** Error al introducir la deuda, mensaje: " + deudaValidada + " ***");
+                System.out.println("*** Vuelve a introducir la deuda. ***");
             }
         } while (!condicionDeuda);
 
@@ -186,9 +187,9 @@ public class Util implements Serializable {
     }
     
     /**
-     * Método utilitario que pide dni de cliente a buscar.
-     * Se realiza para liberar de logica el Main.
-     * @param escanerEntrada 
+     * Método utilitario que pide dni de cliente a buscar.Se realiza para liberar de logica el Main.
+     * @param escanerEntrada
+     * @param condicion 
      */
     public static void clienteBuscarBorrar(Scanner escanerEntrada, String condicion){
         ArrayList<Cliente> listaClientes = cargarListaClientes();
@@ -227,7 +228,7 @@ public class Util implements Serializable {
     public static void BuscarCliente(String dni, ArrayList<Cliente> clientes){
         ArrayList<Cliente> clientesEncontrados = new ArrayList<>();
         
-        // Buscamos el/los clientes que coinciden con el dni.
+        // Buscamos el/los datos que coinciden con el dni.
         for(Cliente cliente : clientes){
             if(cliente.getNif().equalsIgnoreCase(dni)){
                 clientesEncontrados.add(cliente);
@@ -257,14 +258,37 @@ public class Util implements Serializable {
      * @param clientes 
      */
     public static void borrarCliente(String dni, ArrayList<Cliente> clientes){
-        Cliente clienteEncontrado = null;
+        
+        boolean clienteEncontrado = false;
+        ArrayList<Cliente> clientesBorrar = new ArrayList<>();
+        // Recorremos la lista de clientes, y borramos todos los datos 
+        // de los clientes que coincidan con el DNI.
         for(Cliente cliente : clientes){
-            if(cliente.getNif().equals(dni))
-            clienteEncontrado = cliente;
+            if(cliente.getNif().equalsIgnoreCase(dni)){
+                 clientesBorrar.add(cliente);
+                 clienteEncontrado = true;
+            }
+        }
+                
+        for(Cliente cliente : clientesBorrar){
+            clientes.remove(cliente);
         }
         
-        /** continuar con codigo para borrar el cliente del fichero **/
-    
+        if(clienteEncontrado){ 
+            try{
+                ObjectOutputStream objetoSalida;
+                try (FileOutputStream ficheroSalida = new FileOutputStream(ARCHIVO_CLIENTES);) {
+                    objetoSalida = new ObjectOutputStream(ficheroSalida);
+                    objetoSalida.writeObject(clientes);
+                }
+                objetoSalida.close();
+            }catch(IOException ex){
+                System.out.println("*** Error en fichero " + ex.getMessage() + " ***");
+            }
+        }else{
+            System.out.println("*** No existen un cliente con el DNI " + dni + " ***");
+        }
+        System.out.println("*** Se han eliminado los datos del cliente con DNI " + dni + " ***");
     }
 
 // *************************************************************************************************************
@@ -306,10 +330,6 @@ public class Util implements Serializable {
             ) {
                 // lee todos los objetos que esten en el array
                 listaObjetosCliente = (ArrayList<Cliente>) objetoEntrada.readObject();
-                
-                // Cerramos los Streams de entrada
-                ficheroEntrada.close();
-                objetoEntrada.close();
             }
         } catch (IOException | ClassNotFoundException ex) {
             System.out.println("El fichero esta vacío");
@@ -328,8 +348,7 @@ public class Util implements Serializable {
             // Escribe en el archivo el Array de objetos "objetoArrayCliente"
             objetoSalida.writeObject(listaObjetosCliente);
             
-            // Cerramos los Streams de salida.
-            ficheroSalida.close();
+            // Cerramos el objeto de salida.
             objetoSalida.close();
         } catch (IOException ex) {
             System.out.println("Error en fichero " + ex.getMessage());
@@ -340,11 +359,13 @@ public class Util implements Serializable {
     /**
      * Método que borra un fichero si este existe.
      *
-     * @param fichero
      */
-    public static void ficheroBorrar(File fichero) {
+    public static void ficheroBorrar() {
+        File fichero = new File(ARCHIVO_CLIENTES);
         if (fichero.exists()) {
             fichero.delete();
+        }else{
+            System.out.println("*** El fichero no existe, no se puede borrar. ***");
         }
     }
 

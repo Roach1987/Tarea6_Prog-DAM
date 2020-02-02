@@ -28,18 +28,17 @@ public class Main implements Serializable{
                     Util.mostrarClientes();
                     break;
                 case "3":
-                    // *Buscar clientes. Pedirá al usuario el nif del cliente a buscar, 
-                    // y comprobará si existe en el fichero.
                     Util.clienteBuscarBorrar(escanerEntrada, Util.BUSCAR_CLIENTE);
                     break;    
                 case "4":
-                    
+                    Util.clienteBuscarBorrar(escanerEntrada, Util.BORRAR_CLIENTE);
                     break;
                 case "5":
-                    
+                    Util.ficheroBorrar();
                     break;
                 case "6":
-                    
+                    System.out.println("*** Adios, hasta pronto!!! ***");
+                    condicionMenu = true;
                     break;
                 default:
                     System.out.println("*** opcion Incorrecta, vuelva a intentarlo ***");
