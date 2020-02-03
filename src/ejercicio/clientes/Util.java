@@ -370,6 +370,7 @@ public class Util implements Serializable {
         File fichero = new File(ARCHIVO_CLIENTES);
         if (fichero.exists()) {
             fichero.delete();
+            System.out.println("*** El fichero " + ARCHIVO_CLIENTES + " ha sido borrado correctamente ***");
         }else{
             System.out.println("*** El fichero no existe, no se puede borrar. ***");
         }
